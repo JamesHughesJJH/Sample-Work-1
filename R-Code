@@ -1,0 +1,74 @@
+rm(list=ls())
+
+library(xml2)
+
+page<-read_html("http://hoaxes.org/af_database/display/category/united_states")
+class(page)
+View(page)
+
+titles<-xml_text(xml_find_all(page,"//h3[@class='media-heading']/a/b"))
+titles
+
+years<-gsub("[^0-9]","",xml_text(xml_find_all(page,"//h3[@class='media-heading']")))
+years
+
+links<-xml_attr(xml_find_all(page,"//h3[@class='media-heading']/a"),"href")
+links
+
+pranks<-data.frame(titles,years,links)
+names(pranks)[names(pranks)=="titles"]<-"Pranks"
+names(pranks)[names(pranks)=="years"]<-"Year"
+names(pranks)[names(pranks)=="links"]<-"Link"
+View(pranks)
+
+
+pranks$Pranks<-gsub("'","'",pranks$Pranks)
+pranks$Pranks<-gsub("'","'",pranks$Pranks)
+pranks$Pranks<-gsub(""",'"',pranks$Pranks)
+pranks$Pranks<-gsub(""",'"',pranks$Pranks)
+
+pranks$Link<-gsub("\n","",pranks$Link)
+
+pranks$Year<-gsub("Circa","",pranks$Year)
+pranks$Year<-as.integer(pranks$Year)
+
+str(pranks)
+
+
+world<-read.csv(file.choose(),header=TRUE)
+View(world)
+
+names(world)[names(world)=="Prank"]<-"Pranks"
+
+pranks$Country<-"United States"
+View(pranks)
+
+pranks2<-rbind(pranks,world)
+View(pranks2)
+
+
+historical<-read.csv(file.choose(),header=TRUE)
+View(historical)
+
+pranks2$Century<-cut(pranks2$Year,c(1500,1600,1699,1799,1899,1999,2099),c("16th","17th","18th","19th","20th","21st"))
+View(pranks2)
+
+pranks3<-merge(pranks2,historical,
+               by="Century")
+View(pranks3)
+
+
+pranks4<-character(0)
+
+for(i in 0:9){
+  page_num<-i*10
+  print(page_num)
+  sys.sleep(10)
+  link<-paste("http://hoaxes.org/aprilfool/P",page_num)
+  page2<-read_html(link)
+  prank<-xml_text(xml_find_all("//h3[@class='media-heading']/a/b"))
+  pranks4<-c(pranks4,prank)
+}
+top_pranks<-data.frame("pranks4"=pranks)
+
+all_pranks<-merge(pranks3,top_pranks)
